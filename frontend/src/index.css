@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  
+  body {
+    background-color: #061424;
+    color: #d6e3fa;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Monospace tabular numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #061424;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2b3b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #293647;
+}
+
+/* Flash backdrop animations */
+@keyframes flash-green {
+  0% { background-color: rgba(14, 203, 129, 0.35); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-red {
+  0% { background-color: rgba(246, 70, 93, 0.35); }
+  100% { background-color: transparent; }
+}
+
+.animate-flash-buy {
+  animation: flash-green 600ms ease-out;
+}
+
+.animate-flash-sell {
+  animation: flash-red 600ms ease-out;
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 15px rgba(14, 203, 129, 0.2);
+}
+
+.glow-danger {
+  box-shadow: 0 0 15px rgba(246, 70, 93, 0.2);
+}
+
+/* Scanline / Grid overlay for institutional terminal vibe */
+.terminal-grid-bg {
+  background-image: radial-gradient(rgba(41, 54, 71, 0.4) 1px, transparent 0);
+  background-size: 24px 24px;
+}

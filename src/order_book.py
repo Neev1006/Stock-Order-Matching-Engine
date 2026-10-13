@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from sortedcontainers import SortedDict
 
-from Order import Order
 from trade import Trade
 
 
@@ -21,7 +20,7 @@ class OrderBook:
         if order.price <= 0 or order.quantity <= 0:
             return False
 
-        if order.id in self.orders:
+        if order.order_id in self.orders:
             return False
 
         if order.side == "Buy":
@@ -29,19 +28,19 @@ class OrderBook:
             if order.price not in self.bids:
                 self.bids[order.price] = OrderedDict()
 
-            self.bids[order.price][order.id] = order
+            self.bids[order.price][order.order_id] = order
 
         elif order.side == "Sell":
 
             if order.price not in self.asks:
                 self.asks[order.price] = OrderedDict()
 
-            self.asks[order.price][order.id] = order
+            self.asks[order.price][order.order_id] = order
 
         else:
             return False
 
-        self.orders[order.id] = order
+        self.orders[order.order_id] = order
 
         return True
 
@@ -57,7 +56,35 @@ class OrderBook:
 
         return best_bid >= best_ask
 
-    
+    def get_snapshot(self , depth : int = 5):
+        Asks = self.asks.items()
+        Bids = reversed(self.bids.items())
+
+        Asks_List = []
+        Bids_List = []
+
+        for price , orders in Asks:
+            tot_q = sum(a.quantity for a in orders.values())
+            Asks_List.append({
+                "price": price,
+                "quantity": tot_q
+            })
+            if(len(Asks_List) == depth):break
+        
+        for price , orders in Bids:
+            tot_q = sum(a.quantity for a in orders.values())
+            Bids_List.append({
+                "price": price,
+                "quantity": tot_q
+            })
+            if(len(Bids_List) == depth):break
+
+        return {
+            "type": "order_book_snapshot",
+            "bids": Bids_List,
+            "asks": Asks_List
+        }
+
     #EXECUTE ALL TRADES
     def match_orders(self):
 
@@ -83,8 +110,8 @@ class OrderBook:
             )
 
             trade = Trade(
-                buy_order.id,
-                sell_order.id,
+                buy_order.order_id,
+                sell_order.order_id,
                 trade_price,
                 trade_quantity,
             )
@@ -98,8 +125,8 @@ class OrderBook:
             # BUY completely filled
             if buy_order.quantity == 0:
 
-                del bid_orders[buy_order.id]
-                del self.orders[buy_order.id]
+                del bid_orders[buy_order.order_id]
+                del self.orders[buy_order.order_id]
 
                 if not bid_orders:
                     del self.bids[bid_price]
@@ -107,8 +134,8 @@ class OrderBook:
             # SELL completely filled
             if sell_order.quantity == 0:
 
-                del ask_orders[sell_order.id]
-                del self.orders[sell_order.id]
+                del ask_orders[sell_order.order_id]
+                del self.orders[sell_order.order_id]
 
                 if not ask_orders:
                     del self.asks[ask_price]
@@ -140,4 +167,9 @@ class OrderBook:
 
         del self.orders[order_id]
 
-        return True 
+        return True
+
+    def clear(self):
+        self.bids.clear()
+        self.asks.clear()
+        self.orders.clear()

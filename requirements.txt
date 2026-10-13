@@ -1,2 +1,5 @@
 sortedcontainers
 pytest
+fastapi
+uvicorn[standard]
+httpx

@@ -1,1 +1,4 @@
 /readme.md
+/.agents
+/benchmark_websocket_results.json
+/benchmark_mixed_workload_results.json

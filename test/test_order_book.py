@@ -1,7 +1,7 @@
 import sys
 sys.path.append("src")
 
-from Order import Order
+from order import Order
 from order_book import OrderBook
 
 
@@ -112,3 +112,131 @@ def test_non_positive_price_order_is_rejected():
 
     assert book.add_order(Order(1, "Buy", 0, 10)) is False
     assert book.add_order(Order(2, "Sell", -1, 10)) is False
+
+def test_snapshot_orders_bids_and_asks_by_best_price():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 100, 5))
+    book.add_order(Order(2, "Buy", 105, 3))
+    book.add_order(Order(3, "Buy", 103, 2))
+
+    book.add_order(Order(4, "Sell", 110, 4))
+    book.add_order(Order(5, "Sell", 108, 6))
+    book.add_order(Order(6, "Sell", 112, 1))
+
+    snapshot = book.get_snapshot()
+
+    assert snapshot["bids"] == [
+        {"price": 105, "quantity": 3},
+        {"price": 103, "quantity": 2},
+        {"price": 100, "quantity": 5},
+    ]
+
+    assert snapshot["asks"] == [
+        {"price": 108, "quantity": 6},
+        {"price": 110, "quantity": 4},
+        {"price": 112, "quantity": 1},
+    ]
+
+
+def test_snapshot_aggregates_quantity_at_same_price():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 100, 3))
+    book.add_order(Order(2, "Buy", 100, 7))
+
+    snapshot = book.get_snapshot()
+
+    assert snapshot["bids"] == [
+        {"price": 100, "quantity": 10}
+    ]
+
+
+def test_snapshot_respects_depth():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 105, 1))
+    book.add_order(Order(2, "Buy", 104, 1))
+    book.add_order(Order(3, "Buy", 103, 1))
+
+    book.add_order(Order(4, "Sell", 110, 1))
+    book.add_order(Order(5, "Sell", 111, 1))
+    book.add_order(Order(6, "Sell", 112, 1))
+
+    snapshot = book.get_snapshot(depth=2)
+
+    assert snapshot["bids"] == [
+        {"price": 105, "quantity": 1},
+        {"price": 104, "quantity": 1},
+    ]
+
+    assert snapshot["asks"] == [
+        {"price": 110, "quantity": 1},
+        {"price": 111, "quantity": 1},
+    ]
+
+
+def test_snapshot_shows_remaining_quantity_after_partial_fill():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Sell", 100, 5))
+    book.add_order(Order(2, "Buy", 105, 10))
+
+    book.match_orders()
+    snapshot = book.get_snapshot()
+
+    assert snapshot["bids"] == [
+        {"price": 105, "quantity": 5}
+    ]
+    assert snapshot["asks"] == []
+
+
+def test_cancel_sell_order_successfully():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Sell", 100, 5))
+
+    assert book.cancel_order(1, "Sell") is True
+    assert 1 not in book.orders
+    assert not book.asks
+
+
+def test_cancel_order_with_wrong_side_fails():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 100, 5))
+
+    assert book.cancel_order(1, "Sell") is False
+    assert 1 in book.orders
+
+
+def test_cancel_missing_order_fails():
+    book = OrderBook()
+
+    assert book.cancel_order(999, "Buy") is False
+
+
+def test_cancelled_order_disappears_from_snapshot():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 100, 5))
+    book.add_order(Order(2, "Buy", 99, 3))
+
+    book.cancel_order(1, "Buy")
+    snapshot = book.get_snapshot()
+
+    assert snapshot["bids"] == [
+        {"price": 99, "quantity": 3}
+    ]
+
+
+def test_cancelling_last_order_removes_price_level():
+    book = OrderBook()
+
+    book.add_order(Order(1, "Buy", 100, 5))
+    book.add_order(Order(2, "Buy", 99, 3))
+
+    book.cancel_order(1, "Buy")
+
+    assert 100 not in book.bids
+    assert 99 in book.bids

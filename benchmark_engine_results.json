@@ -1,0 +1,12 @@
+{
+  "benchmark": "engine_limit_order_lifecycle",
+  "pairs": 50000,
+  "orders_processed": 100000,
+  "trades_generated": 50000,
+  "elapsed_seconds": 0.157979,
+  "orders_per_second": 632996.33,
+  "trades_per_second": 316498.16,
+  "python_version": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "scenario": "Each pair submits one resting Sell limit order followed by one crossing Buy limit order at the same price."
+}
